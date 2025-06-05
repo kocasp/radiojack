@@ -44,8 +44,8 @@ class FileListScreen(ThemedScreen):
                     size_hint_y=None,
                     height=120,
                     background_normal='',
-                    background_color=(1, 1, 1, 1),       # white
-                    color=(0.082, 0.137, 0.239, 1),      # #15233d text
+                    background_color=(1, 1, 1, 1),
+                    color=(0.082, 0.137, 0.239, 1),
                     font_size=44
                 )
                 btn.bind(on_release=lambda btn: self.open_file(btn.text))
@@ -69,9 +69,7 @@ class FileDetailScreen(ThemedScreen):
 
         self.layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
 
-        self.top_layout = BoxLayout(orientation='vertical', spacing=20, size_hint_y=None)
-        self.top_layout.bind(minimum_height=self.top_layout.setter('height'))
-
+        # Top: Play button
         self.toggle_btn = Button(
             text="Play",
             size_hint_y=None,
@@ -82,23 +80,27 @@ class FileDetailScreen(ThemedScreen):
             font_size=44
         )
         self.toggle_btn.bind(on_release=self.toggle_playback)
+        self.layout.add_widget(self.toggle_btn)
 
+        # Middle: Scrollable transcription text
+        self.scroll = ScrollView(size_hint_y=1)
         self.transcription_label = Label(
             text="",
             size_hint_y=None,
-            height=400,
+            size_hint_x=1,
             halign='left',
             valign='top',
             color=(1, 1, 1, 1),
             font_size=40
         )
-        self.transcription_label.bind(size=self.transcription_label.setter('text_size'))
+        self.transcription_label.bind(
+            width=self._update_text_width,
+            texture_size=self._update_text_height
+        )
+        self.scroll.add_widget(self.transcription_label)
+        self.layout.add_widget(self.scroll)
 
-        self.top_layout.add_widget(self.toggle_btn)
-        self.top_layout.add_widget(self.transcription_label)
-
-        spacer = Widget()
-
+        # Bottom: Back button
         self.back_btn = Button(
             text="Back",
             size_hint_y=None,
@@ -109,11 +111,15 @@ class FileDetailScreen(ThemedScreen):
             font_size=44
         )
         self.back_btn.bind(on_release=self.go_back)
-
-        self.layout.add_widget(self.top_layout)
-        self.layout.add_widget(spacer)
         self.layout.add_widget(self.back_btn)
+
         self.add_widget(self.layout)
+
+    def _update_text_width(self, *args):
+        self.transcription_label.text_size = (self.transcription_label.width, None)
+
+    def _update_text_height(self, *args):
+        self.transcription_label.height = self.transcription_label.texture_size[1]
 
     def load_file(self, filename):
         self.current_file = filename
@@ -130,6 +136,8 @@ class FileDetailScreen(ThemedScreen):
                 self.transcription_label.text = f.read()
         else:
             self.transcription_label.text = "No transcription"
+        self._update_text_width()
+        self._update_text_height()
 
     def toggle_playback(self, *args):
         if self.sound:
