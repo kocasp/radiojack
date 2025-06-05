@@ -39,8 +39,9 @@ class FileListScreen(ThemedScreen):
 
         for file in os.listdir(RECORDINGS_FOLDER):
             if file.endswith('.wav'):
+                display_name = os.path.splitext(file)[0]
                 btn = Button(
-                    text=file,
+                    text=display_name,
                     size_hint_y=None,
                     height=120,
                     background_normal='',
@@ -48,7 +49,8 @@ class FileListScreen(ThemedScreen):
                     color=(0.082, 0.137, 0.239, 1),
                     font_size=44
                 )
-                btn.bind(on_release=lambda btn: self.open_file(btn.text))
+                btn.full_name = file
+                btn.bind(on_release=lambda btn: self.open_file(btn.full_name))
                 inner.add_widget(btn)
 
         scroll.add_widget(inner)
