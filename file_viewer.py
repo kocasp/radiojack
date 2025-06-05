@@ -11,16 +11,30 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
 from kivy.uix.widget import Widget
+from kivy.graphics import Color, Rectangle
 
 RECORDINGS_FOLDER = 'recordings'
 
 
-class FileListScreen(Screen):
+class ThemedScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        with self.canvas.before:
+            Color(0.082, 0.137, 0.239, 1)  # #15233d
+            self.bg = Rectangle(size=self.size, pos=self.pos)
+        self.bind(size=self._update_bg, pos=self._update_bg)
+
+    def _update_bg(self, *args):
+        self.bg.size = self.size
+        self.bg.pos = self.pos
+
+
+class FileListScreen(ThemedScreen):
     def on_enter(self):
         self.clear_widgets()
-        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
         scroll = ScrollView()
-        inner = BoxLayout(orientation='vertical', size_hint_y=None, spacing=5)
+        inner = BoxLayout(orientation='vertical', size_hint_y=None, spacing=10)
         inner.bind(minimum_height=inner.setter('height'))
 
         for file in os.listdir(RECORDINGS_FOLDER):
@@ -28,8 +42,11 @@ class FileListScreen(Screen):
                 btn = Button(
                     text=file,
                     size_hint_y=None,
-                    height=50,
-                    background_color=(0.2, 0.6, 0.9, 1)
+                    height=120,
+                    background_normal='',
+                    background_color=(1, 1, 1, 1),       # white
+                    color=(0.082, 0.137, 0.239, 1),      # #15233d text
+                    font_size=44
                 )
                 btn.bind(on_release=lambda btn: self.open_file(btn.text))
                 inner.add_widget(btn)
@@ -40,52 +57,59 @@ class FileListScreen(Screen):
 
     def open_file(self, filename):
         self.manager.get_screen('details').load_file(filename)
-        self.manager.transition = SlideTransition(direction='left')  # Natural forward transition
+        self.manager.transition = SlideTransition(direction='left')
         self.manager.current = 'details'
 
 
-class FileDetailScreen(Screen):
+class FileDetailScreen(ThemedScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.sound = None
         self.current_file = None
 
-        # Main vertical layout
-        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
 
-        # Top content layout
-        self.top_layout = BoxLayout(orientation='vertical', spacing=10, size_hint_y=None)
+        self.top_layout = BoxLayout(orientation='vertical', spacing=20, size_hint_y=None)
         self.top_layout.bind(minimum_height=self.top_layout.setter('height'))
 
-        self.toggle_btn = Button(text="Play", size_hint_y=None, height=50)
+        self.toggle_btn = Button(
+            text="Play",
+            size_hint_y=None,
+            height=120,
+            background_normal='',
+            background_color=(1, 1, 1, 1),
+            color=(0.082, 0.137, 0.239, 1),
+            font_size=44
+        )
         self.toggle_btn.bind(on_release=self.toggle_playback)
 
         self.transcription_label = Label(
             text="",
             size_hint_y=None,
-            height=200,
+            height=400,
             halign='left',
-            valign='top'
+            valign='top',
+            color=(1, 1, 1, 1),
+            font_size=40
         )
         self.transcription_label.bind(size=self.transcription_label.setter('text_size'))
 
         self.top_layout.add_widget(self.toggle_btn)
-        self.top_layout.add_widget(Label(text='Transcription', size_hint_y=None, height=40))
         self.top_layout.add_widget(self.transcription_label)
 
-        # Spacer to push back button to the bottom
         spacer = Widget()
 
-        # Back button
         self.back_btn = Button(
             text="Back",
             size_hint_y=None,
-            height=50,
-            background_color=(0.8, 0.2, 0.2, 1)
+            height=120,
+            background_normal='',
+            background_color=(1, 1, 1, 1),
+            color=(0.082, 0.137, 0.239, 1),
+            font_size=44
         )
         self.back_btn.bind(on_release=self.go_back)
 
-        # Build layout
         self.layout.add_widget(self.top_layout)
         self.layout.add_widget(spacer)
         self.layout.add_widget(self.back_btn)
@@ -125,7 +149,7 @@ class FileDetailScreen(Screen):
 
     def go_back(self, *args):
         self.stop()
-        self.manager.transition = SlideTransition(direction='right')  # Natural back transition
+        self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'list'
 
 
