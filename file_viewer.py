@@ -1,3 +1,7 @@
+from kivy.config import Config
+Config.set('graphics', 'width', '480')
+Config.set('graphics', 'height', '320')
+
 import os
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
@@ -6,8 +10,7 @@ from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
-from kivy.uix.slider import Slider
-from kivy.clock import Clock
+from kivy.uix.widget import Widget
 
 RECORDINGS_FOLDER = 'recordings'
 
@@ -22,51 +25,71 @@ class FileListScreen(Screen):
 
         for file in os.listdir(RECORDINGS_FOLDER):
             if file.endswith('.wav'):
-                btn = Button(text=file, size_hint_y=None, height=50, background_color=(0.2, 0.6, 0.9, 1))
+                btn = Button(
+                    text=file,
+                    size_hint_y=None,
+                    height=50,
+                    background_color=(0.2, 0.6, 0.9, 1)
+                )
                 btn.bind(on_release=lambda btn: self.open_file(btn.text))
                 inner.add_widget(btn)
 
         scroll.add_widget(inner)
-        layout.add_widget(Label(text='Select a Recording', size_hint_y=None, height=40, bold=True))
         layout.add_widget(scroll)
         self.add_widget(layout)
 
     def open_file(self, filename):
         self.manager.get_screen('details').load_file(filename)
-        self.manager.transition = SlideTransition(direction='left')
+        self.manager.transition = SlideTransition(direction='left')  # Natural forward transition
         self.manager.current = 'details'
 
 
 class FileDetailScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         self.sound = None
-        self.slider = Slider(min=0, max=1, value=0, size_hint_y=None, height=30)
         self.current_file = None
 
-        self.transcription_label = Label(text="", size_hint_y=None, height=200, halign='left', valign='top')
+        # Main vertical layout
+        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        # Top content layout
+        self.top_layout = BoxLayout(orientation='vertical', spacing=10, size_hint_y=None)
+        self.top_layout.bind(minimum_height=self.top_layout.setter('height'))
+
+        self.toggle_btn = Button(text="Play", size_hint_y=None, height=50)
+        self.toggle_btn.bind(on_release=self.toggle_playback)
+
+        self.transcription_label = Label(
+            text="",
+            size_hint_y=None,
+            height=200,
+            halign='left',
+            valign='top'
+        )
         self.transcription_label.bind(size=self.transcription_label.setter('text_size'))
 
-        controls = BoxLayout(size_hint_y=None, height=50, spacing=5)
-        for name, func in [("Play", self.play), ("Pause", self.pause), ("Stop", self.stop),
-                           ("<<", self.backward), (">>", self.forward)]:
-            btn = Button(text=name)
-            btn.bind(on_release=func)
-            controls.add_widget(btn)
+        self.top_layout.add_widget(self.toggle_btn)
+        self.top_layout.add_widget(Label(text='Transcription', size_hint_y=None, height=40))
+        self.top_layout.add_widget(self.transcription_label)
 
-        self.back_btn = Button(text="Back", size_hint_y=None, height=50, background_color=(0.8, 0.2, 0.2, 1))
+        # Spacer to push back button to the bottom
+        spacer = Widget()
+
+        # Back button
+        self.back_btn = Button(
+            text="Back",
+            size_hint_y=None,
+            height=50,
+            background_color=(0.8, 0.2, 0.2, 1)
+        )
         self.back_btn.bind(on_release=self.go_back)
 
-        self.layout.add_widget(Label(text='Audio Player', size_hint_y=None, height=40))
-        self.layout.add_widget(self.slider)
-        self.layout.add_widget(controls)
-        self.layout.add_widget(Label(text='Transcription', size_hint_y=None, height=40))
-        self.layout.add_widget(self.transcription_label)
+        # Build layout
+        self.layout.add_widget(self.top_layout)
+        self.layout.add_widget(spacer)
         self.layout.add_widget(self.back_btn)
         self.add_widget(self.layout)
-
-        Clock.schedule_interval(self.update_slider, 0.5)
 
     def load_file(self, filename):
         self.current_file = filename
@@ -74,8 +97,8 @@ class FileDetailScreen(Screen):
         if self.sound:
             self.sound.stop()
         self.sound = SoundLoader.load(path)
-        if self.sound:
-            self.slider.max = self.sound.length
+
+        self.toggle_btn.text = "Play"
 
         txt_file = os.path.splitext(path)[0] + '.txt'
         if os.path.exists(txt_file):
@@ -84,38 +107,25 @@ class FileDetailScreen(Screen):
         else:
             self.transcription_label.text = "No transcription"
 
-    def play(self, *args):
+    def toggle_playback(self, *args):
         if self.sound:
-            self.sound.play()
+            if self.sound.state == 'play':
+                self.sound.stop()
+                self.sound.seek(0)
+                self.toggle_btn.text = "Play"
+            else:
+                self.sound.play()
+                self.toggle_btn.text = "Stop"
 
-    def pause(self, *args):
-        if self.sound and self.sound.state == 'play':
-            self.sound.pause()
-
-    def stop(self, *args):
+    def stop(self):
         if self.sound:
             self.sound.stop()
             self.sound.seek(0)
-            self.slider.value = 0
-
-    def forward(self, *args):
-        if self.sound:
-            new_pos = min(self.sound.get_pos() + 5, self.sound.length)
-            self.sound.seek(new_pos)
-            self.slider.value = new_pos
-
-    def backward(self, *args):
-        if self.sound:
-            new_pos = max(self.sound.get_pos() - 5, 0)
-            self.sound.seek(new_pos)
-            self.slider.value = new_pos
-
-    def update_slider(self, dt):
-        if self.sound and self.sound.state == 'play':
-            self.slider.value = self.sound.get_pos()
+            self.toggle_btn.text = "Play"
 
     def go_back(self, *args):
-        self.manager.transition = SlideTransition(direction='right')
+        self.stop()
+        self.manager.transition = SlideTransition(direction='right')  # Natural back transition
         self.manager.current = 'list'
 
 
