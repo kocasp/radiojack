@@ -4,7 +4,7 @@ Config.set('graphics', 'height', '320')
 
 import os
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
+from kivy.uix.screenmanager import ScreenManager, Screen, FallOutTransition, RiseInTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
@@ -59,7 +59,7 @@ class FileListScreen(ThemedScreen):
 
     def open_file(self, filename):
         self.manager.get_screen('details').load_file(filename)
-        self.manager.transition = SlideTransition(direction='left')
+        self.manager.transition = RiseInTransition()
         self.manager.current = 'details'
 
 
@@ -159,7 +159,7 @@ class FileDetailScreen(ThemedScreen):
 
     def go_back(self, *args):
         self.stop()
-        self.manager.transition = SlideTransition(direction='right')
+        self.manager.transition = FallOutTransition()
         self.manager.current = 'list'
 
 
