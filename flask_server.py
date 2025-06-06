@@ -58,15 +58,17 @@ DETAIL_TEMPLATE = """
             progressBar.addEventListener('input', () => {
                 audio.currentTime = (progressBar.value / 100) * audio.duration;
             });
+
+            typewriterEffect();
         };
 
         function togglePlay(button) {
             if (audio.paused) {
                 audio.play();
-                button.textContent = '❚❚';  // Pause icon
+                button.textContent = '❚❚';
             } else {
                 audio.pause();
-                button.textContent = '►';  // Play icon
+                button.textContent = '►';
             }
 
             audio.onended = () => {
@@ -78,6 +80,24 @@ DETAIL_TEMPLATE = """
                 }
             };
         }
+
+        function typewriterEffect() {
+            const container = document.getElementById("typewriterText");
+            const fullHTML = container.innerHTML;
+            const words = fullHTML.split(/(\\s+)/);  // keep spaces
+            container.innerHTML = "";
+
+            let i = 0;
+            function addWord() {
+                if (i < words.length) {
+                    container.innerHTML += words[i];
+                    i++;
+                    setTimeout(addWord, 30);  // 200ms per word
+                }
+            }
+
+            addWord();
+        }
     </script>
 </head>
 <body class="terminal">
@@ -87,24 +107,24 @@ DETAIL_TEMPLATE = """
             <button onclick="togglePlay(this)" class="small_button">►</button>
             <input class="jack_player" type="range" id="progressBar" min="0" max="100" value="0" style="flex: 1;">
         </div>
-        <h2 id="headline" >Recording: {{ filename.replace('.wav', '') }}</h2>
+        <h2 id="headline">Recording: {{ filename.replace('.wav', '') }}</h2>
 
         <audio id="audioPlayer" style="display: none;">
             <source src="{{ url_for('static', filename='recordings/' + filename) }}" type="audio/wav">
             Your browser does not support the audio element.
         </audio>
         <blockquote>
-            <p>
-                The blockquote element represents content that is quoted from
-                another source, optionally with a citation which must be within a
-                <code>footer</code> or <code>cite</code> element, and optionally
-                with in-line changes such as annotations and abbreviations.
+            <p id="typewriterText">
+                Mayday, mayday, mayday. This is yacht Sunshine, Sunshine, Sunshine. 
+                Call sign Charlie, Oscar, Charlie, Kilo One. <code>MMSI</code> <code>234765297</code>. Mayday Yacht Sunshine. Call sign Charlie, Oscar, Charlie, Kilo One. <code>NMSI</code> <code>234765297</code>. 
+                My position is 50 degrees, 42 minutes decimal 30 north, 001 degrees, 21 minutes decimal 54 west. I have hit a container and I am holed and sinking. I require immediate assistance. I have two persons on board
             </p>
         </blockquote>
     </div>
 </body>
 </html>
 """
+
 
 
 
