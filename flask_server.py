@@ -13,6 +13,20 @@ TEMPLATE = """
     <meta http-equiv="refresh" content="10">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
+    <style>
+        /* 1. Disable text selection */
+        * {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 4. Scroll-friendly behavior (in case scrolling appears) */
+        .container {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+    </style>
     <script>
         // Block all keyboard inputs
         window.addEventListener('keydown', function(e) {
@@ -43,6 +57,7 @@ TEMPLATE = """
 </html>
 """
 
+
 # Detail page
 DETAIL_TEMPLATE = """
 <!doctype html>
@@ -52,6 +67,13 @@ DETAIL_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
     <style>
+        /* 1. Disable text selection globally */
+        * {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none;     /* IE 10+ */
+            user-select: none;         /* Standard */
+        }
+
         html, body {
             height: 100%;
             margin: 0;
@@ -76,27 +98,16 @@ DETAIL_TEMPLATE = """
             width: 100%;
         }
 
+        /* 4. Improve scrollable behavior on touch */
         .scrollable-content {
             flex: 1;
             overflow-y: auto;
             padding: 10px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
     </style>
     <script>
-        // Block all keyboard inputs
-        window.addEventListener('keydown', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
-        window.addEventListener('keypress', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
-        window.addEventListener('keyup', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
-
         let audio, progressBar;
 
         window.onload = () => {
