@@ -11,7 +11,7 @@ TEMPLATE = """
 <!doctype html>
 <html lang="en">
 <head>
-    <meta http-equiv="refresh" content="10">
+    <meta http-equiv="refresh" content="2">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
     <style>
