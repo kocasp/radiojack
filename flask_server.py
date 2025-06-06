@@ -142,21 +142,13 @@ DETAIL_TEMPLATE = """
                 Your browser does not support the audio element.
             </audio>
             <blockquote>
-                <p id="typewriterText">
-                    Mayday, mayday, mayday. This is yacht Sunshine, Sunshine, Sunshine. 
-                    Call sign Charlie, Oscar, Charlie, Kilo One. <code>MMSI</code> <code>234765297</code>. Mayday Yacht Sunshine. Call sign Charlie, Oscar, Charlie, Kilo One. <code>NMSI</code> <code>234765297</code>. 
-                    My position is 50 degrees, 42 minutes decimal 30 north, 001 degrees, 21 minutes decimal 54 west. I have hit a container and I am holed and sinking. I require immediate assistance. I have two persons on board
-                </p>
+                <p id="typewriterText">{{ text_content | e }}</p>
             </blockquote>
         </div>
     </div>
 </body>
 </html>
 """
-
-
-
-
 
 @app.route('/')
 def list_wav_files():
@@ -168,7 +160,17 @@ def list_wav_files():
 
 @app.route('/recording/<filename>')
 def recording_detail(filename):
-    return render_template_string(DETAIL_TEMPLATE, filename=filename)
+    txt_filename = filename.rsplit('.', 1)[0] + '.txt'
+    txt_path = os.path.join(RECORDINGS_DIR, txt_filename)
+
+    text_content = ''
+    if os.path.exists(txt_path):
+        with open(txt_path, 'r', encoding='utf-8') as f:
+            text_content = f.read()
+    else:
+        text_content = '[ No transcription text found. ]'
+
+    return render_template_string(DETAIL_TEMPLATE, filename=filename, text_content=text_content)
 
 if __name__ == '__main__':
     app.run(debug=True)
