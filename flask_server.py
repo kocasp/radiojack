@@ -1,11 +1,12 @@
 from flask import Flask, render_template_string, url_for
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 RECORDINGS_DIR = 'recordings'
 app.static_folder = '.'  # Serve /recordings and /static properly
 
-# Home page
+# Home page template
 TEMPLATE = """
 <!doctype html>
 <html lang="en">
@@ -14,40 +15,22 @@ TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
     <style>
-        /* 1. Disable text selection */
-        * {
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* 4. Scroll-friendly behavior (in case scrolling appears) */
-        .container {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-        }
+        * { user-select: none; }
+        .container { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     </style>
     <script>
-        // Block all keyboard inputs
-        window.addEventListener('keydown', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
-        window.addEventListener('keypress', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
-        window.addEventListener('keyup', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, true);
+        ['keydown', 'keypress', 'keyup'].forEach(event => {
+            window.addEventListener(event, e => {
+                e.stopPropagation(); e.preventDefault();
+            }, true);
+        });
     </script>
 </head>
 <body class="terminal">
     <div class="container">
         {% if wav_files %}
-            {% for file in wav_files %}
-                <button onclick="location.href='{{ url_for('recording_detail', filename=file) }}'" class="recording_button">[ {{ file.replace('.wav', '') }} ]</button>
+            {% for file, readable in wav_files %}
+                <button onclick="location.href='{{ url_for('recording_detail', filename=file) }}'" class="recording_button">[ {{ readable }} ]</button>
             {% endfor %}
         {% else %}
             <p><i>No recordings files found. Connect your radio to start receiving signals.</i></p>
@@ -57,7 +40,7 @@ TEMPLATE = """
 </html>
 """
 
-# Detail page
+# Detail page template
 DETAIL_TEMPLATE = """
 <!doctype html>
 <html lang="en">
@@ -66,45 +49,12 @@ DETAIL_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
     <style>
-        /* 1. Disable text selection globally */
-        * {
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none;     /* IE 10+ */
-            user-select: none;         /* Standard */
-        }
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .top-bar {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            padding: 10px 10px 0 10px;
-        }
-
-        #progressBar {
-            width: 100%;
-        }
-
-        /* 4. Improve scrollable behavior on touch */
-        .scrollable-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-        }
+        * { user-select: none; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        .container { display: flex; flex-direction: column; height: 100%; }
+        .top-bar { position: sticky; top: 0; z-index: 10; padding: 10px 10px 0 10px; }
+        #progressBar { width: 100%; }
+        .scrollable-content { flex: 1; overflow-y: auto; padding: 10px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     </style>
     <script>
         let audio, progressBar;
@@ -113,12 +63,10 @@ DETAIL_TEMPLATE = """
             audio = document.getElementById('audioPlayer');
             progressBar = document.getElementById('progressBar');
 
-            // Sync progress bar with audio
             audio.addEventListener('timeupdate', () => {
                 progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
             });
 
-            // Update audio time when user moves the bar
             progressBar.addEventListener('input', () => {
                 audio.currentTime = (progressBar.value / 100) * audio.duration;
             });
@@ -134,15 +82,8 @@ DETAIL_TEMPLATE = """
                 audio.pause();
                 button.textContent = '►';
             }
-
-            audio.onended = () => {
-                button.textContent = '►';
-            };
-            audio.onpause = () => {
-                if (!audio.ended) {
-                    button.textContent = '►';
-                }
-            };
+            audio.onended = () => button.textContent = '►';
+            audio.onpause = () => { if (!audio.ended) button.textContent = '►'; };
         }
 
         function typewriterEffect() {
@@ -157,7 +98,7 @@ DETAIL_TEMPLATE = """
                 if (i < words.length) {
                     container.innerHTML += words[i];
                     i++;
-                    setTimeout(addWord, 30);  // 30ms per word
+                    setTimeout(addWord, 30);
                 }
             }
 
@@ -173,11 +114,11 @@ DETAIL_TEMPLATE = """
                 <button onclick="togglePlay(this)" class="small_button">►</button>
                 <input class="jack_player" type="range" id="progressBar" min="0" max="100" value="0" style="flex: 1;">
             </div>
-            <h2 id="headline" style="margin: 10px 0;">Recording: {{ filename.replace('.wav', '') }}</h2>
+            <h2 id="headline" style="margin: 10px 0;">Rec: {{ readable_timestamp }}</h2>
         </div>
 
         <div class="scrollable-content">
-            <audio id="audioPlayer" style="display: none;">
+            <audio id="audioPlayer" style="display: none;" controls>
                 <source src="{{ url_for('static', filename='recordings/' + filename) }}" type="audio/wav">
                 Your browser does not support the audio element.
             </audio>
@@ -196,7 +137,21 @@ def list_wav_files():
         os.makedirs(RECORDINGS_DIR)
     files = os.listdir(RECORDINGS_DIR)
     wav_files = [f for f in files if f.lower().endswith('.wav')]
-    return render_template_string(TEMPLATE, wav_files=wav_files)
+
+    # Convert timestamps to readable format
+    readable_files = []
+    for f in wav_files:
+        try:
+            ts = int(f.replace('.wav', ''))
+            readable = datetime.fromtimestamp(ts).strftime("%H:%M:%S %d.%m.%Y")
+            readable_files.append((f, readable))
+        except ValueError:
+            readable_files.append((f, f.replace('.wav', '')))  # fallback
+
+    # Optional: sort newest first
+    readable_files.sort(reverse=True)
+
+    return render_template_string(TEMPLATE, wav_files=readable_files)
 
 @app.route('/recording/<filename>')
 def recording_detail(filename):
@@ -210,7 +165,12 @@ def recording_detail(filename):
     else:
         text_content = '[ No transcription text found. ]'
 
-    return render_template_string(DETAIL_TEMPLATE, filename=filename, text_content=text_content)
+    try:
+        readable_timestamp = datetime.fromtimestamp(int(filename.replace('.wav', ''))).strftime("%H:%M:%S %d.%m.%Y")
+    except ValueError:
+        readable_timestamp = filename.replace('.wav', '')
+
+    return render_template_string(DETAIL_TEMPLATE, filename=filename, text_content=text_content, readable_timestamp=readable_timestamp)
 
 if __name__ == '__main__':
     app.run(debug=True)

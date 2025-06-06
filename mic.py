@@ -68,7 +68,7 @@ def record_on_sound():
                         silence_start = time.time()
                     elif time.time() - silence_start > SILENCE_TIMEOUT:
                         full_recording = np.concatenate(recording, axis=0)
-                        timestamp = datetime.now().strftime("%H:%M:%S %d.%m.%Y")
+                        timestamp = int(time.time())
                         filename = os.path.join(OUTPUT_FOLDER, f"{timestamp}.wav")
                         wav.write(filename, SAMPLE_RATE, (full_recording * 32767).astype(np.int16))
                         print(f"Saved: {filename}")
