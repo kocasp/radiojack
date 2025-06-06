@@ -1,4 +1,4 @@
-## Run everything in Python environment mode
+## Instructions how to enter pip3 env mode to run Python commands
 ```
 to enter python env
 `source ~/.env/bin/activate`
@@ -18,14 +18,11 @@ source path/to/venv/bin/activate
 python3 -m pip install xyz
 ```
 
-## Start Server with
+## Start application by running all following processes:
 python3 flask_server.py
 
-# Run keyboard play/pause received from radio fix
 python3 key_block.py
 
-## Open chromium in kiosk mode with
-DISPLAY=:0 unclutter -idle 0 -jitter 9999 & DISPLAY=:0 chromium-browser --kiosk --disable-gpu --no-sandbox http://127.0.0.1:5000
+DISPLAY=:0 unclutter-xfixes -idle 0 & DISPLAY=:0 chromium-browser --kiosk --disable-gpu --no-sandbox http://127.0.0.1:5000
 
-# Run microphone service
 python3 mic.py
