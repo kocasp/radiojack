@@ -18,7 +18,7 @@ class ElevenLabsTranscriber:
         result = self.client.speech_to_text.convert(
             file=audio_data,
             model_id=model_id,
-            # tag_audio_events=tag_audio_events
+            tag_audio_events=False,
             # You can expose additional options like language_code or diarize as method parameters
         )
         return result.text

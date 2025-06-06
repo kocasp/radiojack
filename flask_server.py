@@ -10,9 +10,24 @@ TEMPLATE = """
 <!doctype html>
 <html lang="en">
 <head>
-    <meta http-equiv="refresh" content="200">
+    <meta http-equiv="refresh" content="10">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
+    <script>
+        // Block all keyboard inputs
+        window.addEventListener('keydown', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+        window.addEventListener('keypress', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+        window.addEventListener('keyup', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+    </script>
 </head>
 <body class="terminal">
     <div class="container">
@@ -21,7 +36,7 @@ TEMPLATE = """
                 <button onclick="location.href='{{ url_for('recording_detail', filename=file) }}'" class="recording_button">[ {{ file.replace('.wav', '') }} ]</button>
             {% endfor %}
         {% else %}
-            <p><i>No WAV files found in the <code>/recordings</code> directory.</i></p>
+            <p><i>No recordings files found. Connect your radio to start receiving signals.</i></p>
         {% endif %}
     </div>
 </body>
@@ -68,6 +83,20 @@ DETAIL_TEMPLATE = """
         }
     </style>
     <script>
+        // Block all keyboard inputs
+        window.addEventListener('keydown', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+        window.addEventListener('keypress', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+        window.addEventListener('keyup', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, true);
+
         let audio, progressBar;
 
         window.onload = () => {
