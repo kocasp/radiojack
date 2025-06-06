@@ -4,7 +4,7 @@ Config.set('graphics', 'height', '320')
 
 import os
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen, FallOutTransition, RiseInTransition
+from kivy.uix.screenmanager import ScreenManager, Screen, RiseInTransition, FallOutTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
@@ -12,6 +12,7 @@ from kivy.uix.button import Button
 from kivy.core.audio import SoundLoader
 from kivy.uix.widget import Widget
 from kivy.graphics import Color, Rectangle
+from kivy.clock import Clock
 
 RECORDINGS_FOLDER = 'recordings'
 
@@ -68,6 +69,10 @@ class FileDetailScreen(ThemedScreen):
         super().__init__(**kwargs)
         self.sound = None
         self.current_file = None
+        self.full_text = ""
+        self.displayed_words = []
+        self.word_index = 0
+        self.typing_event = None
 
         self.layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
 
@@ -135,11 +140,33 @@ class FileDetailScreen(ThemedScreen):
         txt_file = os.path.splitext(path)[0] + '.txt'
         if os.path.exists(txt_file):
             with open(txt_file, 'r', encoding='utf-8') as f:
-                self.transcription_label.text = f.read()
+                self.full_text = f.read()
         else:
-            self.transcription_label.text = "No transcription"
+            self.full_text = "No transcription"
+
+        # Reset for typewriter animation
+        self.word_index = 0
+        self.displayed_words = []
+        self.transcription_label.text = ""
         self._update_text_width()
         self._update_text_height()
+
+        if self.typing_event:
+            self.typing_event.cancel()
+        self.typing_event = Clock.schedule_interval(self._type_next_word, 0.08)
+
+    def _type_next_word(self, dt):
+        words = self.full_text.split()
+        if self.word_index < len(words):
+            self.displayed_words.append(words[self.word_index])
+            self.transcription_label.text = ' '.join(self.displayed_words)
+            self._update_text_width()
+            self._update_text_height()
+            self.word_index += 1
+        else:
+            if self.typing_event:
+                self.typing_event.cancel()
+                self.typing_event = None
 
     def toggle_playback(self, *args):
         if self.sound:
@@ -159,6 +186,9 @@ class FileDetailScreen(ThemedScreen):
 
     def go_back(self, *args):
         self.stop()
+        if self.typing_event:
+            self.typing_event.cancel()
+            self.typing_event = None
         self.manager.transition = FallOutTransition()
         self.manager.current = 'list'
 
