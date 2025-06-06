@@ -37,9 +37,34 @@ DETAIL_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 10px 10px 0 10px;
+        }
+
         #progressBar {
             width: 100%;
-            margin-top: 10px;
+        }
+
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
         }
     </style>
     <script>
@@ -92,7 +117,7 @@ DETAIL_TEMPLATE = """
                 if (i < words.length) {
                     container.innerHTML += words[i];
                     i++;
-                    setTimeout(addWord, 30);  // 200ms per word
+                    setTimeout(addWord, 30);  // 30ms per word
                 }
             }
 
@@ -102,28 +127,33 @@ DETAIL_TEMPLATE = """
 </head>
 <body class="terminal">
     <div class="container">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button onclick="location.href='{{ url_for('list_wav_files') }}'" class="small_button"><</button>
-            <button onclick="togglePlay(this)" class="small_button">►</button>
-            <input class="jack_player" type="range" id="progressBar" min="0" max="100" value="0" style="flex: 1;">
+        <div class="top-bar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button onclick="location.href='{{ url_for('list_wav_files') }}'" class="small_button"><</button>
+                <button onclick="togglePlay(this)" class="small_button">►</button>
+                <input class="jack_player" type="range" id="progressBar" min="0" max="100" value="0" style="flex: 1;">
+            </div>
+            <h2 id="headline" style="margin: 10px 0;">Recording: {{ filename.replace('.wav', '') }}</h2>
         </div>
-        <h2 id="headline">Recording: {{ filename.replace('.wav', '') }}</h2>
 
-        <audio id="audioPlayer" style="display: none;">
-            <source src="{{ url_for('static', filename='recordings/' + filename) }}" type="audio/wav">
-            Your browser does not support the audio element.
-        </audio>
-        <blockquote>
-            <p id="typewriterText">
-                Mayday, mayday, mayday. This is yacht Sunshine, Sunshine, Sunshine. 
-                Call sign Charlie, Oscar, Charlie, Kilo One. <code>MMSI</code> <code>234765297</code>. Mayday Yacht Sunshine. Call sign Charlie, Oscar, Charlie, Kilo One. <code>NMSI</code> <code>234765297</code>. 
-                My position is 50 degrees, 42 minutes decimal 30 north, 001 degrees, 21 minutes decimal 54 west. I have hit a container and I am holed and sinking. I require immediate assistance. I have two persons on board
-            </p>
-        </blockquote>
+        <div class="scrollable-content">
+            <audio id="audioPlayer" style="display: none;">
+                <source src="{{ url_for('static', filename='recordings/' + filename) }}" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+            <blockquote>
+                <p id="typewriterText">
+                    Mayday, mayday, mayday. This is yacht Sunshine, Sunshine, Sunshine. 
+                    Call sign Charlie, Oscar, Charlie, Kilo One. <code>MMSI</code> <code>234765297</code>. Mayday Yacht Sunshine. Call sign Charlie, Oscar, Charlie, Kilo One. <code>NMSI</code> <code>234765297</code>. 
+                    My position is 50 degrees, 42 minutes decimal 30 north, 001 degrees, 21 minutes decimal 54 west. I have hit a container and I am holed and sinking. I require immediate assistance. I have two persons on board
+                </p>
+            </blockquote>
+        </div>
     </div>
 </body>
 </html>
 """
+
 
 
 
