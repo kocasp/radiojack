@@ -36,38 +36,76 @@ DETAIL_TEMPLATE = """
     <title>Recording Detail</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='css/terminal.css') }}" rel="stylesheet">
+    <style>
+        #progressBar {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
     <script>
+        let audio, progressBar;
+
+        window.onload = () => {
+            audio = document.getElementById('audioPlayer');
+            progressBar = document.getElementById('progressBar');
+
+            // Sync progress bar with audio
+            audio.addEventListener('timeupdate', () => {
+                progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
+            });
+
+            // Update audio time when user moves the bar
+            progressBar.addEventListener('input', () => {
+                audio.currentTime = (progressBar.value / 100) * audio.duration;
+            });
+        };
+
         function togglePlay(button) {
-            const audio = document.getElementById('audioPlayer');
             if (audio.paused) {
                 audio.play();
-                button.textContent = '';  // Pause icon
+                button.textContent = '❚❚';  // Pause icon
             } else {
                 audio.pause();
                 button.textContent = '►';  // Play icon
             }
 
-            // Sync button state with audio events
             audio.onended = () => {
                 button.textContent = '►';
+            };
+            audio.onpause = () => {
+                if (!audio.ended) {
+                    button.textContent = '►';
+                }
             };
         }
     </script>
 </head>
 <body class="terminal">
     <div class="container">
-        <button onclick="location.href='{{ url_for('list_wav_files') }}'" class="small_button"><</button>
-        <button onclick="togglePlay(this)" class="small_button">►</button>
-        <p><a href="{{ url_for('list_wav_files') }}">← Back to List</a></p>
-        <h2>Recording: {{ filename }}</h2>
-        <audio id="audioPlayer" style="width: 100%;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="location.href='{{ url_for('list_wav_files') }}'" class="small_button"><</button>
+            <button onclick="togglePlay(this)" class="small_button">►</button>
+            <input class="jack_player" type="range" id="progressBar" min="0" max="100" value="0" style="flex: 1;">
+        </div>
+        <h2 id="headline" >Recording: {{ filename.replace('.wav', '') }}</h2>
+
+        <audio id="audioPlayer" style="display: none;">
             <source src="{{ url_for('static', filename='recordings/' + filename) }}" type="audio/wav">
             Your browser does not support the audio element.
         </audio>
+        <blockquote>
+            <p>
+                The blockquote element represents content that is quoted from
+                another source, optionally with a citation which must be within a
+                <code>footer</code> or <code>cite</code> element, and optionally
+                with in-line changes such as annotations and abbreviations.
+            </p>
+        </blockquote>
     </div>
 </body>
 </html>
 """
+
 
 
 @app.route('/')
