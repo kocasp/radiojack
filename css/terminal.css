@@ -398,6 +398,7 @@ button {
 }
 .container {
   padding: 10px;
+  margin-right: 20px;
 }
 .small_button {
   width: 75px;
