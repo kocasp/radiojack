@@ -57,7 +57,6 @@ TEMPLATE = """
 </html>
 """
 
-
 # Detail page
 DETAIL_TEMPLATE = """
 <!doctype html>
@@ -148,9 +147,10 @@ DETAIL_TEMPLATE = """
 
         function typewriterEffect() {
             const container = document.getElementById("typewriterText");
-            const fullHTML = container.innerHTML;
+            const fullHTML = container.getAttribute("data-content") || "";
             const words = fullHTML.split(/(\\s+)/);  // keep spaces
             container.innerHTML = "";
+            container.style.visibility = "visible";
 
             let i = 0;
             function addWord() {
@@ -182,7 +182,7 @@ DETAIL_TEMPLATE = """
                 Your browser does not support the audio element.
             </audio>
             <blockquote>
-                <p id="typewriterText">{{ text_content | e }}</p>
+                <p id="typewriterText" data-content="{{ text_content | e }}" style="visibility: hidden;"></p>
             </blockquote>
         </div>
     </div>
